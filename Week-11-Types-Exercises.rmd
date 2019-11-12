@@ -104,9 +104,14 @@ Compute average tv hours by party ID an then plot the results.
 ```{r}
 gss_cat %>%
    filter(!is.na(tvhours)) %>%
+  mutate(partyid = partyid %>%
+    fct_collapse(
+          conservative = c("Strong republican", "Not str republican", "Ind,near rep"),
+          liberal = c("Strong democrat", "Not str democrat", "Ind,near dem")) %>%
+    fct_lump() ) %>%
    group_by(partyid) %>%
-   summarise(tvhours = mean(tvhours)) %>%
-   ggplot(aes(tvhours, fct_reorder(partyid, tvhours))) +
+   summarise(tv_avg = mean(tvhours)) %>%
+   ggplot(aes(tv_avg, fct_reorder(partyid, tv_avg))) +
      geom_point() +
      labs(y = "partyid")
 
@@ -123,6 +128,18 @@ Use the `hour` and `minute` variables in `flights` to make a new variable that s
 Then use a smooth line to plot the relationship between time of day and `arr_delay`.
 
 ```{r}
+library(hms)
+hms(seconds=56, min=34, hour=12)
+unclass(hms(56, 34, 12))
+
+flights %>% 
+  mutate(time = hms(hours = hour, minutes = minute)) %>% 
+  ggplot(aes(time, arr_delay)) + 
+    geom_point(alpha = 0.2) + geom_smooth()
+
+flights %>% 
+  mutate(time = hms(hour = hour, minute = minute)) %>% 
+  ggplot(aes(time, arr_delay)) + geom_smooth()
 
 ```
 
@@ -144,8 +161,11 @@ Extract the day of the week of each flight (as a full name) from `time_hour`.
 Plot the average arrival delay by day as a column chart (bar chart).
 
 ```{r}
+
+library(lubridate)
+
 flights %>% 
-  mutate(weekday = _______________________________) %>% 
+  mutate(weekday =  wday(time_hour, label = TRUE, abbr = FALSE)) %>% 
   group_by(weekday) %>% 
   filter(!is.na(arr_delay)) %>% 
   summarise(avg_delay = mean(arr_delay)) %>% 
